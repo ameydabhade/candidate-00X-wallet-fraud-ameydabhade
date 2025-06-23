@@ -9,13 +9,11 @@ const Joi = require('joi');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 
-// Mock data storage
 let fraudFlags = [
   {
     entryId: uuidv4(),
@@ -43,7 +41,6 @@ let fraudFlags = [
     timestamp: moment().subtract(30, 'minutes').toISOString(),
     status: 'resolved'
   },
-  // NEW PENDING FLAGS FOR TESTING
   {
     entryId: uuidv4(),
     reason: 'Multiple rapid transactions from same IP',
@@ -177,7 +174,6 @@ let auditLogs = [
   }
 ];
 
-// Mock user balances for admin dashboard
 let userBalances = [
   { userId: 'user_001', username: 'john_doe', balance: 1250, status: 'active' },
   { userId: 'user_002', username: 'jane_smith', balance: 890, status: 'flagged' },
@@ -191,7 +187,6 @@ let userBalances = [
   { userId: 'user_010', username: 'helen_davis', balance: 1580, status: 'active' }
 ];
 
-// Credit configuration
 let creditConfig = {
   contestWin: 100,
   referral: 50,
@@ -202,15 +197,11 @@ let creditConfig = {
   maxSingleTransaction: 500
 };
 
-// Validation schemas
 const resolveSchema = Joi.object({
   entryId: Joi.string().required(),
   action: Joi.string().valid('approve', 'reject', 'investigate').required()
 });
 
-// API Routes
-
-// GET /api/fraud/flags - Get flagged entries
 app.get('/api/fraud/flags', (req, res) => {
   try {
     const { status } = req.query;
@@ -233,7 +224,6 @@ app.get('/api/fraud/flags', (req, res) => {
   }
 });
 
-// POST /api/fraud/resolve - Resolve fraud flag
 app.post('/api/fraud/resolve', (req, res) => {
   try {
     const { error, value } = resolveSchema.validate(req.body);
@@ -255,17 +245,15 @@ app.post('/api/fraud/resolve', (req, res) => {
       });
     }
     
-    // Update flag status
     fraudFlags[flagIndex].status = action === 'approve' ? 'resolved' : 'rejected';
     fraudFlags[flagIndex].resolvedAt = moment().toISOString();
     
-    // Add audit log entry
     const auditEntry = {
       entryId: uuidv4(),
       changes: `Fraud flag ${action}ed: ${fraudFlags[flagIndex].reason}`,
       timestamp: moment().toISOString(),
       userId: fraudFlags[flagIndex].userId,
-      adminId: 'admin_001', // Mock admin ID
+      adminId: 'admin_001',
       action: `fraud_${action}`
     };
     auditLogs.unshift(auditEntry);
@@ -283,7 +271,6 @@ app.post('/api/fraud/resolve', (req, res) => {
   }
 });
 
-// GET /api/audit/logs - Get audit logs
 app.get('/api/audit/logs', (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
@@ -310,9 +297,6 @@ app.get('/api/audit/logs', (req, res) => {
   }
 });
 
-// Additional endpoints for admin dashboard
-
-// GET /api/admin/users - Get user balances
 app.get('/api/admin/users', (req, res) => {
   try {
     res.json({
@@ -327,7 +311,6 @@ app.get('/api/admin/users', (req, res) => {
   }
 });
 
-// GET /api/admin/config - Get credit configuration
 app.get('/api/admin/config', (req, res) => {
   try {
     res.json({
@@ -342,7 +325,6 @@ app.get('/api/admin/config', (req, res) => {
   }
 });
 
-// PUT /api/admin/config - Update credit configuration
 app.put('/api/admin/config', (req, res) => {
   try {
     const configSchema = Joi.object({
@@ -364,10 +346,10 @@ app.put('/api/admin/config', (req, res) => {
       });
     }
     
-    // Update configuration
+   
     creditConfig = { ...creditConfig, ...value };
     
-    // Add audit log
+    
     const auditEntry = {
       entryId: uuidv4(),
       changes: `Credit configuration updated: ${JSON.stringify(value)}`,
@@ -391,7 +373,7 @@ app.put('/api/admin/config', (req, res) => {
   }
 });
 
-// Health check endpoint
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -400,7 +382,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 handler
+
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -408,7 +390,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// Error handler
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
